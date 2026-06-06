@@ -1,0 +1,40 @@
+8) Реализуйте механизм инвентаризации машин HQ-SRV и HQ-CLI через Ansible на BR-SRV
+
+===BR-SRV===
+
+ls -l /mnt/ (если команда выдаёт total 0, то выполняем команду mount ниже)
+
+mount -o loop /dev/sr0 /mnt/ -v
+
+cp /mnt/playbook/get_hostname_address.yml /etc/ansible/
+
+cd /etc/ansible/
+
+mkdir PC-INFO
+
+=== 
+cat << "EOF" >  get_hostname_address.yml
+---
+- name: "Get data from hosts"
+  gather_facts: true
+  hosts:
+    - HQ-SRV
+    - HQ-CLI
+  tasks:
+    - name: "Creating a data file" 
+      copy:
+        dest: /etc/ansible/PC-INFO/{{ ansible_hostname }}.yml
+        content: |
+          Hostname: {{ ansible_hostname }}
+          IP_Address: {{ ansible_default_ipv4.address }}
+      delegate_to: localhost
+EOF
+===
+
+ansible-playbook --syntax-check get_hostname_address.yml
+
+ansible-playbook get_hostname_address.yml
+
+cat PC-INFO/hq-srv.yml
+
+cat PC-INFO/hq-cli.yml

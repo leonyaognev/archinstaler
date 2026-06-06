@@ -1,0 +1,31 @@
+===BR-SRV===
+
+apt-get install ansible sshpass -y
+
+cp -r /etc/ansible/ansible.cfg /etc/ansible/ansible.cfg.back
+
+rm -rf /etc/ansible/ansible.cfg
+
+vim /etc/ansible/ansible.cfg
+
+[defaults]
+
+host_key_checking = False
+interpreter_python=/usr/bin/python3
+inventory       = /etc/ansible/hosts
+
+=====================================
+
+vim /etc/ansible/hosts
+
+HQ-SRV ansible_user=user ansible_password=resu ansible_port=2026
+HQ-RTR ansible_user=net_admin ansible_password=P@ssw0rd ansible_port=2026
+BR-RTR ansible_user=net_admin ansible_password=P@ssw0rd ansible_port=2026
+HQ-CLI ansible_user=user ansible_password=resu ansible_port=2026
+
+=====================================
+
+Проверить состояние службы SSH на хостах
+(все должны ответить "pong")
+
+ansible all -m ping

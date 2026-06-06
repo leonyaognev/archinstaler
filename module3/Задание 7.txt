@@ -1,0 +1,59 @@
+7) Насервере HQ-SRV реализуйте мониторинг устройств с помощью открытого программного обеспечения
+
+===BR-SRV===
+
+apt-get install prometheus-node_exporter -y
+
+systemctl enable --now prometheus-node_exporter
+
+ss -ltnp | grep 9100
+
+samba-tool dns add br-srv.au-team.irpo au-team.irpo mon CNAME hq-srv.au-team.irpo -U Administrator
+
+samba-tool dns query br-srv.au-team.irpo au-team.irpo mon CNAME -U administrator
+
+
+===HQ-SRV===
+
+apt-get install prometheus grafana  prometheus-node_exporter -y
+
+vim /etc/prometheus/prometheus.yml
+
+  - job_name: 'prometheus'
+
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: hq-srv
+    static_configs:
+       - targets: ['192.168.1.10:9100']
+  - job_name: br-srv
+    static_configs:
+      - targets: ['192.168.3.10:9100']
+
+
+systemctl enable --now prometheus-node_exporter 
+systemctl enable --now prometheus
+systemctl enable --now grafana-server 
+systemctl status prometheus-node_exporter prometheus grafana-server 
+
+=====
+
+Открываем GUI по адресу http://hq-srv.au-team.irpo:9090
+
+Status - Target (Должны быть наши сервера)
+
+http://hq-srv.au-team.irpo:3000
+
+Логин: admin
+Пароль: admin
+
+Новый пароль: P@ssw0rd
+
+Connetctions - Data Source - http://hq-srv:9090
+
+Dashboard - New - Import - 1860
+
+http://mon.au-team.irpo:3000

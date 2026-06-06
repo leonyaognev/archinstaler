@@ -1,0 +1,19 @@
+===HQ-RTR + BR-RTR===
+
+apt-get install nftables nano -y
+
+nano /etc/nftables/nftables.nft
+
+#!/usr/sbin/nft -f
+flush ruleset
+
+table ip nat {
+    chain postrouting {
+        type nat hook postrouting priority srcnat;
+        oifname "enp7s1" masquerade
+    }
+}
+
+systemctl enable --now nftables
+
+systemctl restart nftables.service

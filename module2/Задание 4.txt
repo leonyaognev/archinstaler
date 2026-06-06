@@ -1,0 +1,39 @@
+=====ISP=====
+
+control chrony server
+
+sed -i 's/pool pool.ntp.org iburst/pool pool.ntp.org iburst prefer minstratum 4/' /etc/chrony.conf | grep pool /etc/chrony.conf
+
+sed -i 's/\#local stratum 10/local stratum 5/' /etc/chrony.conf | grep "local stratum" /etc/chrony.conf
+
+systemctl restart chronyd
+===============================
+
+
+
+===Далее команда выполняется на машинах HQ-SRV, BR-RTR и BR-SRV===
+
+sed -i 's/pool pool.ntp.org iburst/server 172.16.1.1 iburst/' /etc/chrony.conf && systemctl restart chronyd
+
+---Через 10 секунд проверяем---
+
+chronyc sources
+===============================
+
+
+
+
+-==На HQ-CLI выполняем другую команду===
+
+echo "server 172.16.1.1 iburst" >> /etc/chrony.conf && systemctl restart chronyd
+
+---Через 10 секунд проверяем---
+
+chronyc sources
+
+
+---Вывод команды (chronyc sources) должен быть приблизительно следующим---
+
+MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+===============================================================================
+^* 172.16.1.1                    5   6    17     1  +1438ns[  +43us] +/-   38ms

@@ -1,0 +1,24 @@
+5) Настройка принт-сервер CUPS
+
+===HQ-SRV===
+
+apt-get update && apt-get install cups cups-pdf -y
+
+vim /etc/cups/cupsd.conf
+
+<Location />
+<Location /admin>
+<Location /admin/conf>
+Allow all
+# Only listen for connections from the local machine.
+Listen 192.168.1.10:631
+
+systemctl enable --now cups
+
+systemctl restart cups
+
+ss -ltnp4 | grep 631
+
+---на HQ-CLI
+
+Меню -> Параметры печати -> Удаляем принтер -> Добавляем новый -> Поиск сетевого принтера -> 192.168.1.10 -> Отменяем вход -> Выбираем принтер из списка -> Далее (везде)

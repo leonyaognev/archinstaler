@@ -1,0 +1,67 @@
+==========HQ-SRV==========
+
+useradd -u 2026 sshuser
+
+echo "sshuser:P@ssw0rd" | chpasswd
+
+usermod -aG wheel sshuser
+
+echo "WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/sshuser
+
+su -l sshuser
+
+sudo id
+
+exit
+
+
+
+==========BR-SRV==========
+
+useradd -u 2026 sshuser
+
+echo "sshuser:P@ssw0rd" | chpasswd
+
+usermod -aG wheel sshuser
+
+echo "WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/sshuser
+
+su -l sshuser
+
+sudo id
+
+exit
+
+==========HQ-RTR==========
+
+useradd net_admin
+
+echo "net_admin:P@ssw0rd" | chpasswd
+
+usermod -aG wheel net_admin
+
+apt-get update && apt-get install sudo -y
+
+echo "WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/net_admin
+
+su -l net_admin
+
+sudo id
+
+exit
+
+==========BR-RTR==========
+
+useradd net_admin
+
+echo "net_admin:P@ssw0rd" | chpasswd
+
+usermod -aG wheel net_admin
+
+apt-get update && apt-get install sudo
+
+echo "WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/net_admin
+
+su -l net_admin
+
+sudo id

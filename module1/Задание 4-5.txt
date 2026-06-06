@@ -1,0 +1,43 @@
+=====HQ-SRV=====
+
+vim /etc/openssh/sshd_config
+
+Port 2026
+AllowUsers sshuser
+MaxAuthTries 2
+Banner /etc/openssh/ssh_banner
+
+
+echo "Authorized access only" | tee /etc/openssh/ssh_banner
+
+Перезагружаем SSH-сервис:
+
+systemctl restart sshd
+
+Проверка:
+С машины HQ-RTR подключаемся по SSH к машине HQ-SRV
+ssh -p 2026 sshuser@192.168.100.2
+
+exit
+
+=====BR-SRV=====
+
+vim /etc/openssh/sshd_config
+
+Port 2026
+AllowUsers sshuser
+MaxAuthTries 2
+Banner /etc/openssh/ssh_banner
+
+
+echo "Authorized access only" | tee /etc/openssh/ssh_banner
+
+Перезагружаем SSH-сервис:
+
+systemctl restart sshd
+
+Проверка:
+С машины BR-RTR подключаемся по SSH к машине BR-SRV
+ssh -p 2026 sshuser@192.168.0.2
+
+exit

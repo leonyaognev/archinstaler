@@ -1,0 +1,5 @@
+===HQ-CLI===
+
+apt-get update && apt-get install yandex-browser-stable -y
+
+• Установку браузера отметьте в отчёте.

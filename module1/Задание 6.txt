@@ -1,0 +1,33 @@
+===BR-RTR===
+
+vim /etc/net/ifaces/gre1/options
+
+TYPE=iptun
+TUNTYPE=gre
+TUNLOCAL=172.16.2.2
+TUNREMOTE=172.16.1.2
+TUNTTL=64
+TUNOPTIONS='ttl 64'
+
+echo "10.10.10.2/30" > /etc/net/ifaces/gre1/ipv4address
+systemctl restart network
+
+ip -br -c a
+
+===HQ-RTR===
+
+vim /etc/net/ifaces/gre1/options
+
+TYPE=iptun
+TUNTYPE=gre
+TUNLOCAL=172.16.1.2
+TUNREMOTE=172.16.2.2
+TUNTTL=64
+TUNOPTIONS='ttl 64'
+
+echo "10.10.10.1/30" > /etc/net/ifaces/gre1/ipv4address
+systemctl restart network
+
+ip -br -c a
+
+ping 10.10.10.2 -c 3

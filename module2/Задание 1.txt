@@ -1,0 +1,122 @@
+=========BR-SRV=========
+
+------------SambaDC------------
+echo "nameserver 192.168.1.10" >> /etc/net/ifaces/enp7s1/resolv.conf
+
+systemctl restart network
+
+cat /etc/resolv.conf
+
+ping ya.ru -c 2
+
+apt-get update && apt-get install task-samba-dc -y
+
+rm -f /etc/samba/smb.conf
+
+rm -rf {/var/lib/samba, /var/cache/samba}
+
+mkdir -p /var/lib/samba/sysvol
+
+samba-tool domain provision
+
+"Везде соглашаемся со значениями по умолчанию (Жмём Enter)"
+"Пароль задаём: P@ssw0rd"
+
+mv /etc/krb5.conf /etc/krb5.conf.back
+
+cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+
+systemctl enable --now samba
+
+systemctl status samba
+
+samba-tool domain info 127.0.0.1
+
+================================
+------------DNS------------
+
+samba-tool dns add br-srv.au-team.irpo au-team.irpo hq-srv A 192.168.1.10 -U Administrator
+
+samba-tool dns add br-srv.au-team.irpo au-team.irpo hq-rtr A 192.168.1.1 -U Administrator
+
+samba-tool dns add br-srv.au-team.irpo au-team.irpo br-rtr A 192.168.3.1 -U Administrator
+
+samba-tool dns add br-srv.au-team.irpo au-team.irpo web.au-team.irpo A 172.16.1.1 -U Administrator
+
+samba-tool dns add br-srv.au-team.irpo au-team.irpo docker.au-team.irpo A 172.16.2.1 -U Administrator
+
+samba-tool dns query br-srv.au-team.irpo au-team.irpo @ ALL -U administrator
+
+sed -i 's/nameserver 192.168.1.10/nameserver 127.0.0.1/' /etc/net/ifaces/enp7s1/resolv.conf 
+
+systemctl restart network
+
+cat /etc/resolv.conf
+
+kinit administrator@AU-TEAM.IRPO
+
+================================
+------------Users------------
+
+samba-tool group add hq
+
+for i in {1..5}; do samba-tool user add hquser$i P@ssw0rd; done
+
+for i in {1..5}; do samba-tool group addmembers hq hquser$i; done
+
+samba-tool group listmembers hq
+
+================================
+
+=========HQ-RTR=========
+sed -i 's/192.168.1.10/192.168.3.10/' /etc/dnsmasq.conf; systemctl restart dnsmasq
+
+cat /etc/dnsmasq.conf
+
+=========HQ-CLI=========
+!!!Работаем в графической оболочке HQ-CLI (под user)!!!
+
+на HQ-CLI перезагружаем сеть, проверяем DNS, вводим в домен
+
+acc
+
+Пользователи (Аутентификация) -> Галочка (Домен Active Directory) -> Применить -> Пароль P@ssw0rd
+Если настроено всё верно, появится окно (Добро пожаловать в домен AU-TEAM.IRPO)
+Перезагружаем машину
+
+Меню -> Выйти -> Перезагрузить
+
+Пользователь: hquser1
+Пароль: P@ssw0rd
+
+!!!Работаем в консольной оболочке HQ-CLI (под root)!!!
+
+control libnss-role 
+(Должна выдать enabled)
+
+roleadd hq wheel
+
+echo "WHEEL_USERS ALL=(ALL:ALL) /bin/cat, /bin/grep, /usr/bin/id" >> /etc/sudoers
+
+tail /etc/sudoers
+
+!!!Работаем в графической оболочке HQ-CLI (под user)!!!
+
+Перезагружаем машину
+
+Меню -> Выйти -> Перезагрузить
+
+Пользователь: hquser1
+Пароль: P@ssw0rd
+
+Открываем терминал и проверяем команду
+
+sudo id
+*вводим пароль*
+sudo cat /etc/resolv.conf
+*вводим пароль*
+sudo grep
+*вводим пароль*
+
+
+

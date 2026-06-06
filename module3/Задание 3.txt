@@ -1,0 +1,61 @@
+3) Настройте защищенный туннель
+
+===HQ-RTR===
+
+apt-get update && apt-get install openvpn -y
+
+openvpn --genkey secret /etc/openvpn/keys/static.key
+chmod og-rw /etc/openvpn/keys/static.key
+
+cat /etc/openvpn/keys/static.key
+Копируем всё содержимое
+
+===BR-RTR===
+
+apt-get update && apt-get install openvpn -y
+
+cat > /etc/openvpn/keys/static.key
+Вставляем скопированный ключ с HQ-RTR
+
+chmod og-rw /etc/openvpn/keys/static.key
+
+vim /etc/openvpn/client/tun0.conf
+
+remote 172.16.1.10
+dev tun0
+cipher AES-256-CBC
+auth-nocache
+ifconfig 192.168.5.2 192.168.5.1
+secret /etc/openvpn/keys/static.key
+
+
+systemctl enable openvpn-client@tun0
+
+rm -rf /etc/net/ifaces/gre1/ && reboot
+======================================
+
+Возвращаемся на ===HQ-RTR===
+
+vim /etc/openvpn/server/tun0.conf
+
+dev tun0
+cipher AES-256-CBC
+auth-nocache
+ifconfig 192.168.5.1 192.168.5.2
+secret /etc/openvpn/keys/static.key
+
+
+systemctl enable openvpn-server@tun0
+
+rm -rf /etc/net/ifaces/gre1/ && reboot
+======================================
+
+Дальше правим маршрутизацию на обоих Хостах
+
+sed -i 's/interface gre1/interface tun0/' /etc/frr/frr.conf ; grep tun0 -A6 /etc/frr/frr.conf
+
+systemctl restart frr
+
+ip -br -c a
+
+ip r

@@ -1,0 +1,133 @@
+10) Настройка резервного копирования директории сервера HQ-SRV
+
+===HQ-SRV===
+
+vim /etc/fstab
+(удялем поледнюю строку /raid)
+
+apt-get update && apt-get install kernel-source-6.1 kernel-headers-modules-un-def gcc make kmod-sign -y
+
+update-kernel -y
+
+reboot
+
+uname -r
+
+Создать пользователя irpoadmin с паролем P@ssw0rd
+
+useradd irpoadmin
+passwd irpoadmin
+
+ls -l /lib/modules/6.1.169-un-def-alt1/build
+mount /dev/sr1 /mnt
+/mnt/cyberbackup_17.4.36200.x86_64 --skip-prereq-check
+[*] Management Server          -
+[*] Agent for Linux            0
+[ ] Bootable Media Builder     a
+[ ] Agent for CommuniGate Pro  a
+[*] Agent for MySQL/MariaDB    a  
+
+
+ss -ltnp | grep 9877
+
+control mysqld server
+systemctl restart mysqld
+
+ss -ltnp | grep 3306
+
+===HQ-CLI===
+apt-get update && apt-get install kernel-source-6.1 kernel-headers-modules-un-def gcc make kmod-sign -y
+
+update-kernel -y
+
+reboot
+
+uname -r
+
+mount /dev/sr0 /mnt
+/mnt/cyberbackup_17.4.36200.x86_64 --skip-prereq-check
+[ ] Management Server          -
+[*] Agent for Linux            0
+[ ] Bootable Media Builder     a
+ -----
+[*] Storage Node               a   
+
+IP 192.168.1.10
+Логин: root
+Пароль toor
+
+В графике:
+1)Создать организацию irpo 
+2)Создать хранилице на узле хранения
+3)Создать планы хранения
+
+подлючаемся к серверу по IP
+192.168.1.10:9877
+
+https://hq-srv.au-team.irpo:9877
+
+Login: root
+Pass: toor
+
+Запустить пробную лецензию - подтвердить.
+
+Настройки - учетные записи - организации - создать отдел
+Название: irpo
+
+Выбираем irpo - добавить учетную запись - irpoadmin
+
+===Создаём План №1
+
+Планы - создать план - добавить устройство - выбираем hq-srv - добавить
+Место сохранения - Узел хранений - Путь - создать папку - backup - ГОТОВО
+Указываем имя хранилища - backup_dir
+Пользователь root/toor
+Выбор данных - Файлы/папки - Указать каталог /etc
+Меняем имя плана защиты на etc_backup
+Создать
+
+===Создаём План №2
+
+Место сохранения - выбираем наш backup_dir
+Резервное копирование приложения - MySQL/MariaDB - Добавить экземпляр - вводим root/toor - готово
+Меняем имя плана защиты на webdb_backup
+Добавить устройство - выбираем hq-srv - добавить
+Создать
+
+===Делаем бекапы
+Устройства
+Создать резервную копию (webdb_backup и etc_backup)
+По времени может занять очень много...
+
+
+===========================
+tune2fs -m 1 /dev/sda2
+rpm -e --nodeps MonitoringServer-17.4.36200-1.x86_64
+rpm -e --nodeps WebConsole-17.4.36200-1.x86_64
+rpm -e --nodeps AcronisCentralizedManagementServer-17.4.36200-1.x86_64
+rpm -e --nodeps dkms-3.0.3.3-100.noarch
+rpm -e --nodeps snapapi26_modules-1.0.9-1.noarch
+
+
+!!!!====!!!!
+Для устранения проблемы с отсутствием соединения на webdb_bakcup выполняем след. команды на hq-srv
+
+systemctl stop mariadb
+
+mysqld_safe --skip-grant-tables &
+
+mysql -u root
+
+FLUSH PRIVILEGES;
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'toor';
+
+FLUSH PRIVILEGES;
+EXIT;
+
+pkill mysqld
+
+systemctl start mariadb
+
+и повторно делаем копию.
+
+

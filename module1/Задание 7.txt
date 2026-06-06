@@ -1,0 +1,73 @@
+===HQ-RTR===
+apt-get update && apt-get install frr -y
+
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons ; grep ospf /etc/frr/daemons
+
+vim /etc/frr/frr.conf
+
+interface gre
+ no ip ospf passive
+exit
+!
+interface gre1
+ ip ospf area 0
+ ip ospf authentication
+ ip ospf authentication-key P@ssw0rd
+ no ip ospf passive
+exit
+!
+interface vlan100
+ ip ospf area 0
+exit
+!
+interface vlan200
+ ip ospf area 0
+exit
+!
+interface vlan999
+ ip ospf area 0
+exit
+!
+router ospf
+ passive-interface default
+exit
+
+
+systemctl enable --now frr
+
+systemctl restart network
+
+
+
+
+===BR-RTR===
+apt-get update && apt-get install frr -y
+
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons ; grep ospf /etc/frr/daemons
+
+vim /etc/frr/frr.conf
+
+
+interface gre
+ no ip ospf passive
+exit
+!
+interface gre1
+ ip ospf area 0
+ ip ospf authentication
+ ip ospf authentication-key P@ssw0rd
+ no ip ospf passive
+exit
+!
+interface enp7s2
+ ip ospf area 0
+exit
+!
+router ospf
+ passive-interface default
+exit
+
+
+systemctl enable --now frr
+
+systemctl restart network

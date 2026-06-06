@@ -1,0 +1,185 @@
+Задание №1
+Настройка имён хостов
+
+hostnamectl set-hostname isp.au-team.irpo; exec bash
+
+hostnamectl set-hostname hq-rtr.au-team.irpo; exec bash
+
+hostnamectl set-hostname hq-srv.au-team.irpo; exec bash
+
+hostnamectl set-hostname hq-cli.au-team.irpo; exec bash
+
+hostnamectl set-hostname br-rtr.au-team.irpo; exec bash
+
+hostnamectl set-hostname br-srv.au-team.irpo; exec bash
+
+
+Настройка IP адресов
+===ИНТЕРФЕЙСЫ ISP===
+
+mkdir -p /etc/net/ifaces/enp7s{2,3}
+
+echo 'TYPE=eth' | tee /etc/net/ifaces/enp7s{2,3}/options
+echo '172.16.1.1/28' > /etc/net/ifaces/enp7s2/ipv4address
+echo '172.16.2.1/28' > /etc/net/ifaces/enp7s3/ipv4address
+
+systemctl restart network
+
+ip -c --br a
+=======================
+
+
+
+===ИНТЕРФЕЙСЫ BR-RTR===
+
+mkdir -p /etc/net/ifaces/{enp7s{1,2},gre1}
+
+echo 'TYPE=eth' | tee /etc/net/ifaces/enp7s{1,2}/options
+
+-------to ISP------
+
+echo '172.16.2.2/28' > /etc/net/ifaces/enp7s1/ipv4address
+
+echo 'default via 172.16.2.1' > /etc/net/ifaces/enp7s1/ipv4route
+
+echo 'nameserver 8.8.8.8' > /etc/net/ifaces/enp7s1/resolv.conf
+
+-------to BR-SRV---
+
+echo '192.168.0.1/28' > /etc/net/ifaces/enp7s2/ipv4address
+
+-------включение маршрутизации---------
+
+vim /etc/net/sysctl.conf
+
+systemctl restart network
+
+ip -c --br a
+=======================
+
+
+
+
+
+
+
+
+
+
+===ИНТЕРФЕЙСЫ BR-SRV===
+
+echo 'TYPE=eth' > /etc/net/ifaces/enp7s1/options
+
+echo '192.168.0.2/28' > /etc/net/ifaces/enp7s1/ipv4address
+
+echo 'default via 192.168.0.1' > /etc/net/ifaces/enp7s1/ipv4route
+
+echo $'search au-team.irpo\nnameserver 192.168.100.2' > /etc/net/ifaces/enp7s1/resolv.conf
+
+systemctl restart network
+
+ip -c --br a
+=========================
+
+
+===ИНТЕРФЕЙСЫ HQ-RTR===
+mkdir -p /etc/net/ifaces/{enp7s{1,2},vlan{100,200,999},gre1}
+
+echo 'TYPE=eth' | tee /etc/net/ifaces/enp7s{1,2}/options
+
+-------to ISP------
+
+echo '172.16.1.2/28' > /etc/net/ifaces/enp7s1/ipv4address
+
+echo 'default via 172.16.1.1' > /etc/net/ifaces/enp7s1/ipv4route
+
+echo 'nameserver 8.8.8.8' > /etc/net/ifaces/enp7s1/resolv.conf
+
+--------настройка VLAN-----------
+
+echo $'100\n200\n999' | xargs -i bash -c 'echo -e "TYPE=vlan\nHOST=enp7s2\nVID={}" > /etc/net/ifaces/vlan{}/options'
+
+cat /etc/net/ifaces/vlan999/options
+
+echo '192.168.100.1/27' > /etc/net/ifaces/vlan100/ipv4address
+
+echo '192.168.200.1/24' > /etc/net/ifaces/vlan200/ipv4address
+
+echo '192.168.99.1/29' > /etc/net/ifaces/vlan999/ipv4address
+
+-------включение маршрутизации---------
+
+vim /etc/net/sysctl.conf
+
+systemctl restart network
+
+ip -c --br a
+=========================
+
+
+
+
+
+
+===ИНТЕРФЕЙСЫ HQ-SRV===
+
+echo 'TYPE=eth' > /etc/net/ifaces/enp7s1/options
+
+echo '192.168.100.2/27' > /etc/net/ifaces/enp7s1/ipv4address
+
+echo 'default via 192.168.100.1' > /etc/net/ifaces/enp7s1/ipv4route
+
+echo 'nameserver 8.8.8.8' > /etc/net/ifaces/enp7s1/resolv.conf
+
+systemctl restart network
+
+ip -c --br a
+=========================
+
+
+
+
+
+
+
+
+Задание №2
+Выполняется на ISP
+
+vim /etc/net/sysctl.conf
+net.ipv4.ip_forward = 1
+
+systemctl restart network
+
+apt-get update && apt-get install nftables nano -y
+
+nano /etc/nftables/nftables.nft
+
+==
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table ip nat {
+    chain postrouting {
+        type nat hook postrouting priority srcnat;
+        oifname "enp7s1" masquerade
+    }
+}
+==
+
+systemctl enable --now nftables
+systemctl start nftables
+nft flush ruleset
+nft -f /etc/nftables/nftables.nft
+
+
+nft list ruleset
+Команда должна вывести текст из предыдущего действия.
+
+sysctl net.ipv4.ip_forward
+
+ping -c4 ya.ru 
+
+
+

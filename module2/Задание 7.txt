@@ -1,0 +1,48 @@
+===HQ-SRV===
+
+mount -o loop /dev/sr0 /mnt/ -v
+
+apt-get install lamp-server -y
+
+cp /mnt/web/index.php /var/www/html
+
+cp /mnt/web/logo.png /var/www/html
+
+systemctl enable --now mariadb
+======================================
+
+mariadb -e "CREATE DATABASE webdb;"
+
+mariadb -e "
+
+CREATE USER 'web'@'localhost' IDENTIFIED BY 'P@ssw0rd';
+
+GRANT ALL PRIVILEGES ON webdb.* TO 'web'@'localhost';
+
+"
+
+mariadb webdb < /mnt/web/dump.sql
+
+mariadb -e "USE webdb; SHOW TABLES;"
+=====================================
+
+vim /var/www/html/index.php
+
+$servername = "localhost";
+
+$username = "web";
+
+$password = "P@ssw0rd";
+
+$dbname = "webdb";
+
+systemctl enable --now httpd2.service
+============================================
+
+Переходим на HQ-CLI, заходим по 192.168.1.10
+
+Пометка: По заданию мы должны попадать на сайт через домен
+web.au-team.irpo + аутенфикация по паролю,
+но мы пока этого сделать не можем,
+т.к. у нас не настроен реверс-прокси** на ISP (nginx)
+**Выполняется в задании №9

@@ -1,0 +1,34 @@
+1) Выполните импорт пользователей в домен au-team.irpo
+
+===BR-SRV===
+
+---------импорт пользователей------------
+
+mount -o loop /dev/sr0 /mnt/ -v
+
+ls -l /mnt/
+
+iconv -f UTF-8 -t UTF-8//IGNORE /mnt/Users.csv > /root/users_fix.csv
+
+cat << "EOF" > import.sh
+#!/bin/bash
+#
+while IFS=';' read -r name fam role phone ou street zip city country pass; do
+username="$fam"."${name:0:1}"
+samba-tool user create "${username,,}" "P@ssw0rd1" --given-name="$fam" --
+surname="$name" --job-title="$role" --telephone-number="$phone"
+[[ -n "$ou" ]] && samba-tool ou create "OU=$ou" 2>/dev/null
+[[ -n "$ou" ]] && samba-tool user move "${username,,}" "OU=$ou" 2>/dev/null
+done < users_fix.csv
+EOF
+
+bash import.sh
+
+samba-tool user list
+
+samba-tool user show *имя пользователя*
+====================
+Для проверки выбираем любого пользователя и входим через GUI на HQ-CLI
+
+Логин: любой из списка
+Пароль: P@ssw0rd1

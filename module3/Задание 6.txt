@@ -1,0 +1,111 @@
+6) Реализуйте логирование при помощи rsyslog на устройствах HQ-RTR, BR-RTR, BR-SRV
+
+===BR-SRV===
+
+---rsyslog
+
+apt-get install rsyslog -y
+
+grep 'Syslog' /etc/systemd/journald.conf
+
+vim /etc/rsyslog.d/00_common.conf
+
+раскомментировать
+
+module(load="imjournal") # ...
+
+module(load="imuxsock") # ...
+
+echo -e "ForwardToSyslog=yes\nMaxLevelSyslog=warning" >> /etc/systemd/journald.conf
+
+echo "*.warn @192.168.1.10" > /etc/rsyslog.d/10_to_server.conf
+
+systemctl restart systemd-journald
+
+systemctl enable --now rsyslog
+
+================================
+
+===HQ-RTR + BR-RTR===
+
+---rsyslog
+
+apt-get install rsyslog -y
+
+grep 'Syslog' /etc/systemd/journald.conf
+
+vim /etc/rsyslog.d/00_common.conf
+
+раскомментировать
+
+module(load="imjournal") # ...
+
+module(load="imuxsock") # ...
+
+echo -e "ForwardToSyslog=yes\nMaxLevelSyslog=warning" >> /etc/systemd/journald.conf
+
+echo "*.warn @192.168.1.10" > /etc/rsyslog.d/10_to_server.conf
+
+systemctl restart systemd-journald
+
+systemctl enable --now rsyslog
+
+
+===HQ-SRV===
+
+--rsyslog
+
+apt-get install rsyslog-classic rsyslog-server-listen -y
+
+cat << "EOF" > /etc/rsyslog.d/91_template.conf
+$template DynFile,"/opt/%HOSTNAME%/%PROGRAMNAME%.log"
+*.* ?DynFile
+& stop
+EOF
+
+vim /etc/rsyslog.d/10_classic.conf
+
+закоментировать строку
+
+module(load="imuxsock") ---> #
+
+systemctl restart rsyslogd
+
+======================
+
+На хостах HQ-RTR, BR-RTR, BR-SRV выполняем команду
+
+logger -p local2.warning "Syslog test message"
+
+Проверяем на HQ-SRV
+
+ls -l /opt
+
+=========================
+
+apt-get install logrotate -y
+
+
++++
+cat << EOF > /etc/logrotate.d/rsyslog
+/opt/**/*.log
+{ 
+weekly
+missingok
+notifempty 
+compress 
+minsize 10M
+} 
+EOF
++++
+
+Проверка
+
+logrotate -d /etc/logrotate.d/rsyslog
+
+export EDITOR=/usr/bin/vim
+
+crontab -e 
+
+ 0	0	*	*	0	root /usr/sbin/logrotate /etc/logrotate.d/rsyslog
+
